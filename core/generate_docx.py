@@ -36,9 +36,10 @@ class Generate_docx:
     def load_dict(self, path, sheetname):
         df = pd.read_excel(path, index_col=[1, 2], sheet_name=sheetname)
         print("***")
+        # df = df.loc[:, ~df.columns.str.startswith("Unnamed")]
+        df = df.drop(columns=["Unnamed: 0"])
+        df = df.dropna(how="all", axis=0)
         print(df)
-        df = df.loc[:, ~df.columns.str.startswith("Unnamed")]
-
         # context = (
         #     df.groupby(level=0).apply(lambda df: df.xs(df.name).to_dict(orient="list")).to_dict()
         # )
@@ -88,17 +89,13 @@ class Generate_docx:
     ):
         dict_dict, dict_dict_final = dict(), dict()
         for i in range(0, len(sheetnames)):
-
             context = self.load_dict(load_data_path, sheetnames[i])
-
             if sheetnames[i] == "风数据总结":
                 tower_check_word_dict = get_tower_check_word_dict(context)
                 tower_density_title_dict = get_tower_density_title_dict(context)
-
                 tower_density_word_dict = get_tower_density_word_dict(context)
                 dict_dict = dict(
-                    context,
-                    **tower_check_word_dict,
+                    tower_check_word_dict,
                     **tower_density_title_dict,
                     **tower_density_word_dict
                 )
@@ -108,8 +105,13 @@ class Generate_docx:
                 windspeed_word_dict = get_windspeed_word_dict(context)
                 dict_dict = dict(windspeed_word_dict)
 
-            dict_dict_final = dict(dict_dict_final, **dict_dict)
-            # print(dict_dict_final)
+            # elif sheetnames[i] == "风速合理性检验":
+
+            #     windspeed_word_dict = get_windspeed_word_dict(context)
+            #     dict_dict = dict(windspeed_word_dict)
+
+            dict_dict_final = dict(dict_dict_final, **context, **dict_dict)
+            print(dict_dict_final)
         self.create_doc(dict_dict_final, read_templates_path, input, save_path, output)
 
 
@@ -120,14 +122,14 @@ if __name__ == "__main__":
 
     read_templates_path = os.path.abspath(os.path.join(os.getcwd(), "./templates"))
     save_path = os.path.abspath(os.path.join(os.getcwd(), "./templates"))
-    result_sheet_names = ["风数据总结", "平均风速及风功率密度"]
+    result_sheet_names = ["风数据总结", "风速合理性检验"]
     # 生成word文件
     test_word = Generate_docx()
     test_word.generate_word_method(
-        os.path.join(read_templates_path, "data_excel_test.xlsx"),
+        os.path.join(read_templates_path, "data_excel.xlsx"),
         result_sheet_names,
         read_templates_path,
-        "word_templates",
+        "测风数据分析报告-templates",
         save_path,
         "res",
     )
