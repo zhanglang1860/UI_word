@@ -27,7 +27,7 @@ class Generate_docx:
             table_list = df.xs(df.name).to_dict()
 
         else:
-            df = df.xs(df.name).to_dict()
+            df = df.xs(df.name).dropna(how="all",axis=1).to_dict()
             for key in df.keys():
                 table_list.append(df[key])
 
