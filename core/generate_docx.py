@@ -17,21 +17,40 @@ from generate_words.generate_check_tower_word_dict import *
 from generate_words.generate_windspeed_word_dict import *
 
 
+# for key, value in dict.items():
+#     aKey = key
+#     aValue = value
+#     temp.append(aKey)
+#     temp.append(aValue)
+#     dictList.append(temp)
+#     aKey = ""
+#     aValue = ""
 class Generate_docx:
 
     """1. 重构Dict"""
 
     def method_to_dict(self, df):
         table_list = []
+        cft_name_vaule = df.iloc[0, 0]
         if df.name.endswith("words"):
-            table_list = df.xs(df.name).to_dict()
+            context = df.xs(df.name).to_dict()
 
         else:
-            df = df.xs(df.name).dropna(how="all",axis=1).to_dict()
+            df = df.xs(df.name).dropna(how="all", axis=1).to_dict()
+            print(df)
             for key in df.keys():
-                table_list.append(df[key])
 
-        return table_list
+                # for k, v in df[key].items():
+                #     table_list.append(v)
+                table_list.append(df[key])
+            dict_cft = dict({"cft_name": cft_name_vaule})
+            dict_metadata = dict({"metadata": table_list})
+
+            context = dict(
+                dict_cft,
+                **dict_metadata,
+            )
+        return context
 
     def load_dict(self, path, sheetname):
         df = pd.read_excel(path, index_col=[1, 2], sheet_name=sheetname)
@@ -43,8 +62,14 @@ class Generate_docx:
         # context = (
         #     df.groupby(level=0).apply(lambda df: df.xs(df.name).to_dict(orient="list")).to_dict()
         # )
-
+        final_table_list = []
         context = df.groupby(level=0).apply(self.method_to_dict).to_dict()
+        for key in context.keys():
+            final_table_list.append(context[key])
+
+        context = dict({"风速合理性检验_tables": final_table_list})
+        print("***333asd")
+        print(context)
 
         return context
 
@@ -97,7 +122,7 @@ class Generate_docx:
                 dict_dict = dict(
                     tower_check_word_dict,
                     **tower_density_title_dict,
-                    **tower_density_word_dict
+                    **tower_density_word_dict,
                 )
                 # print(dict_dict)
             elif sheetnames[i] == "平均风速及风功率密度":
@@ -111,7 +136,7 @@ class Generate_docx:
             #     dict_dict = dict(windspeed_word_dict)
 
             dict_dict_final = dict(dict_dict_final, **context, **dict_dict)
-            print(dict_dict_final)
+
         self.create_doc(dict_dict_final, read_templates_path, input, save_path, output)
 
 
@@ -122,7 +147,8 @@ if __name__ == "__main__":
 
     read_templates_path = os.path.abspath(os.path.join(os.getcwd(), "./templates"))
     save_path = os.path.abspath(os.path.join(os.getcwd(), "./templates"))
-    result_sheet_names = ["风数据总结", "风速合理性检验"]
+    # result_sheet_names = ["风数据总结", "风速合理性检验"]
+    result_sheet_names = ["Sheet1"]
     # 生成word文件
     test_word = Generate_docx()
     test_word.generate_word_method(
