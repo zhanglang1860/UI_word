@@ -64,38 +64,38 @@ def get_tower_check_word_dict(context):
     return res_dict
 
 
-def get_tower_density_title_dict(context):
+# def get_tower_density_title_dict(context):
 
-    turbine_height = context["风数据总结_table"][0]["轮毂高度"]
-    table_col_name = ["测风塔", "高程（m）", "10m", str(turbine_height) + "m"]
-    table_col_name_dict = dict({"tower_density_labels": table_col_name})
+#     turbine_height = context["风数据总结_words"][0]["轮毂高度"]
+#     table_col_name = ["测风塔", "高程（m）", "10m", str(turbine_height) + "m"]
+#     table_col_name_dict = dict({"tower_density_labels": table_col_name})
 
-    return table_col_name_dict
+#     return table_col_name_dict
 
 
-def get_tower_density_word_dict(context):
-    words = []
-    average_temp = 6.67
-    average_pres = 89.67
-    superscript = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
-    density_unit="kg/m3".translate(superscript)
+# def get_tower_density_word_dict(context):
+#     words = []
+#     average_temp = 6.67
+#     average_pres = 89.67
+#     superscript = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
+#     density_unit="kg/m3".translate(superscript)
 
-    for each_dict in context["风数据总结_table"]:
+#     for each_dict in context["风数据总结_table"]:
 
-        word_str = "本阶段收集到参考周期内%s测风塔气温数据。根据%s测风塔数据，年平均气温%s℃，依据海平面外推%s高程%sm处年平均气压%skPa，测风塔高度处空气密度为%s%s；风电场轮毂高度%sm处空气密度为%s%s。" % (
-            each_dict["编号"],
-            each_dict["编号"],
-            average_temp,
-            each_dict["编号"],
-            each_dict["海拔"],
-            average_pres,
-            each_dict["装置处的空气密度"],
-            density_unit,
-            each_dict["轮毂高度"],
-            each_dict["轮毂高度处的空气密度"],
-            density_unit,
-        )
-        words.append(word_str)
+#         word_str = "本阶段收集到参考周期内%s测风塔气温数据。根据%s测风塔数据，年平均气温%s℃，依据海平面外推%s高程%sm处年平均气压%skPa，测风塔高度处空气密度为%s%s；风电场轮毂高度%sm处空气密度为%s%s。" % (
+#             each_dict["编号"],
+#             each_dict["编号"],
+#             average_temp,
+#             each_dict["编号"],
+#             each_dict["海拔"],
+#             average_pres,
+#             each_dict["装置处的空气密度"],
+#             density_unit,
+#             each_dict["轮毂高度"],
+#             each_dict["轮毂高度处的空气密度"],
+#             density_unit,
+#         )
+#         words.append(word_str)
       
-    res_dict = dict({"各测风塔空气密度描述": words})
-    return res_dict
+#     res_dict = dict({"各测风塔空气密度描述": words})
+#     return res_dict

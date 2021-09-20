@@ -39,9 +39,6 @@ class Generate_docx:
             df = df.xs(df.name).dropna(how="all", axis=1).to_dict()
             print(df)
             for key in df.keys():
-
-                # for k, v in df[key].items():
-                #     table_list.append(v)
                 table_list.append(df[key])
             dict_cft = dict({"cft_name": cft_name_vaule})
             dict_metadata = dict({"metadata": table_list})
@@ -53,25 +50,34 @@ class Generate_docx:
         return context
 
     def load_dict(self, path, sheetname):
+        context_tables,context_words={},{}
         df = pd.read_excel(path, index_col=[1, 2], sheet_name=sheetname)
-        print("***")
+
         # df = df.loc[:, ~df.columns.str.startswith("Unnamed")]
         df = df.drop(columns=["Unnamed: 0"])
         df = df.dropna(how="all", axis=0)
-        print(df)
+
         # context = (
         #     df.groupby(level=0).apply(lambda df: df.xs(df.name).to_dict(orient="list")).to_dict()
         # )
         final_table_list = []
-        context = df.groupby(level=0).apply(self.method_to_dict).to_dict()
+       
+        context= df.groupby(level=0).apply(self.method_to_dict).to_dict()
+        # print("context")
+        # print(context) 
         for key in context.keys():
-            final_table_list.append(context[key])
+            if "table" in key:
+               final_table_list.append(context[key])
+               context_tables = dict({sheetname+"_tables": final_table_list})
+            else:
+                print("asssssssssssssssssssssss")
+                context_words=dict({sheetname+"_words":context[key]})
+        print("context_table")
+        print(context_tables)  
+        print("context_word")
+        print(context_words)
 
-        context = dict({"风速合理性检验_tables": final_table_list})
-        print("***333asd")
-        print(context)
-
-        return context
+        return context_tables,context_words
 
     """2. 生成Word_Dict
         运行相应的get words 模板
@@ -114,20 +120,20 @@ class Generate_docx:
     ):
         dict_dict, dict_dict_final = dict(), dict()
         for i in range(0, len(sheetnames)):
-            context = self.load_dict(load_data_path, sheetnames[i])
+            context_tables,context_words = self.load_dict(load_data_path, sheetnames[i])
             if sheetnames[i] == "风数据总结":
-                tower_check_word_dict = get_tower_check_word_dict(context)
-                tower_density_title_dict = get_tower_density_title_dict(context)
-                tower_density_word_dict = get_tower_density_word_dict(context)
+                tower_check_word_dict = get_tower_check_word_dict(context_words)
+                # tower_density_title_dict = get_tower_density_title_dict(context_words)
+                # tower_density_word_dict = get_tower_density_word_dict(context_words)
                 dict_dict = dict(
                     tower_check_word_dict,
-                    **tower_density_title_dict,
-                    **tower_density_word_dict,
+                    # **tower_density_title_dict,
+                    # **tower_density_word_dict,
                 )
                 # print(dict_dict)
             elif sheetnames[i] == "平均风速及风功率密度":
 
-                windspeed_word_dict = get_windspeed_word_dict(context)
+                windspeed_word_dict = get_windspeed_word_dict(context_words)
                 dict_dict = dict(windspeed_word_dict)
 
             # elif sheetnames[i] == "风速合理性检验":
@@ -135,7 +141,7 @@ class Generate_docx:
             #     windspeed_word_dict = get_windspeed_word_dict(context)
             #     dict_dict = dict(windspeed_word_dict)
 
-            dict_dict_final = dict(dict_dict_final, **context, **dict_dict)
+            dict_dict_final = dict(dict_dict_final, **context_tables, **dict_dict)
 
         self.create_doc(dict_dict_final, read_templates_path, input, save_path, output)
 
@@ -147,8 +153,19 @@ if __name__ == "__main__":
 
     read_templates_path = os.path.abspath(os.path.join(os.getcwd(), "./templates"))
     save_path = os.path.abspath(os.path.join(os.getcwd(), "./templates"))
-    # result_sheet_names = ["风数据总结", "风速合理性检验"]
-    result_sheet_names = ["Sheet1"]
+    result_sheet_names = [
+        "风数据总结",
+        "风速合理性检验",
+        "风向合理性检验",
+        "气压合理性检验",
+        "相关性检验参考表",
+        "风速相关性检验",
+        "风向相关性检验",
+        "风速趋势检验",
+        "气温趋势检验",
+        "气压趋势检验",
+        "测风塔完整率",
+    ]
     # 生成word文件
     test_word = Generate_docx()
     test_word.generate_word_method(
