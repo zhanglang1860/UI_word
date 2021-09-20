@@ -12,6 +12,7 @@ import re
 
 import pandas as pd
 from docxtpl import DocxTemplate, RichText
+from docxtpl.richtext import R
 
 from generate_words.generate_check_tower_word_dict import *
 from generate_words.generate_windspeed_word_dict import *
@@ -31,13 +32,51 @@ class Generate_docx:
 
     def method_to_dict(self, df):
         table_list = []
+        context = {}
         cft_name_vaule = df.iloc[0, 0]
         if df.name.endswith("words"):
             context = df.xs(df.name).to_dict()
 
+        elif df.name.endswith("nocols"):
+            tbl_contents = []
+
+            cft_name_vaule = df.xs(df.name).index[0]
+            col_labels_list = df.xs(df.name).iloc[0, 1:].values.tolist()
+            col_labels = dict({"col_labels": col_labels_list})
+
+            choose_df = df.xs(df.name).iloc[1:, :].dropna(how="all",axis=1)
+            choose_df = choose_df.fillna("-")
+            print("asdasdasdasd")
+            print(choose_df)
+            for i in range(0, choose_df.shape[0]):
+                index_labels = dict({"index_labels": choose_df.index[i]})
+                value_labels = dict(
+                    {"value_labels": choose_df.iloc[i, :].values.tolist()}
+                )
+
+                single_context = dict(index_labels, **value_labels)
+                tbl_contents.append(single_context)
+
+            tbl_contents_dict = dict({"tbl_contents": tbl_contents})
+            dict_cft = dict({"cft_name": cft_name_vaule})
+            context = dict(
+                dict_cft,
+                **col_labels,
+                **tbl_contents_dict,
+            )
+            print("contextttt")
+            print(context)
+            # table_list = df.xs(df.name).dropna(how="all", axis=1).T.to_dict(orient="list")
+            # print("iiiiiiiiiiiiii")
+            # print(table_list)
+            # dict_cft = dict({"cft_name": cft_name_vaule})
+            # # dict_metadata = dict({"metadata": [table_list]})
+            # context = dict(
+            #     dict_cft,
+            #     **table_list,
+            # )
         else:
             df = df.xs(df.name).dropna(how="all", axis=1).to_dict()
-            print(df)
             for key in df.keys():
                 table_list.append(df[key])
             dict_cft = dict({"cft_name": cft_name_vaule})
@@ -50,7 +89,7 @@ class Generate_docx:
         return context
 
     def load_dict(self, path, sheetname):
-        context_tables,context_words={},{}
+        context_tables, context_words, context_nocols = {}, {}, {}
         df = pd.read_excel(path, index_col=[1, 2], sheet_name=sheetname)
 
         # df = df.loc[:, ~df.columns.str.startswith("Unnamed")]
@@ -61,23 +100,28 @@ class Generate_docx:
         #     df.groupby(level=0).apply(lambda df: df.xs(df.name).to_dict(orient="list")).to_dict()
         # )
         final_table_list = []
-       
-        context= df.groupby(level=0).apply(self.method_to_dict).to_dict()
-        # print("context")
-        # print(context) 
+
+        context = df.groupby(level=0).apply(self.method_to_dict).to_dict()
+        print(context)
+        print("context.keys()")
+        print(context.keys())
         for key in context.keys():
             if "table" in key:
-               final_table_list.append(context[key])
-               context_tables = dict({sheetname+"_tables": final_table_list})
+                final_table_list.append(context[key])
+                context_tables = dict({sheetname + "_tables": final_table_list})
+            elif "nocols" in key:
+                final_table_list.append(context[key])
+                context_nocols = dict({sheetname + "_nocols": final_table_list})
+
             else:
-                print("asssssssssssssssssssssss")
-                context_words=dict({sheetname+"_words":context[key]})
+                context_words = dict({sheetname + "_words": context[key]})
         print("context_table")
-        print(context_tables)  
+        print(context_tables)
         print("context_word")
         print(context_words)
-
-        return context_tables,context_words
+        print("context_nocols")
+        print(context_nocols)
+        return context_tables, context_words, context_nocols
 
     """2. 生成Word_Dict
         运行相应的get words 模板
@@ -120,7 +164,9 @@ class Generate_docx:
     ):
         dict_dict, dict_dict_final = dict(), dict()
         for i in range(0, len(sheetnames)):
-            context_tables,context_words = self.load_dict(load_data_path, sheetnames[i])
+            context_tables, context_words, context_nocols = self.load_dict(
+                load_data_path, sheetnames[i]
+            )
             if sheetnames[i] == "风数据总结":
                 tower_check_word_dict = get_tower_check_word_dict(context_words)
                 # tower_density_title_dict = get_tower_density_title_dict(context_words)
@@ -141,8 +187,10 @@ class Generate_docx:
             #     windspeed_word_dict = get_windspeed_word_dict(context)
             #     dict_dict = dict(windspeed_word_dict)
 
-            dict_dict_final = dict(dict_dict_final, **context_tables, **dict_dict)
-
+            dict_dict_final = dict(
+                dict_dict_final, **context_tables, **context_nocols, **dict_dict
+            )
+            print(dict_dict_final)
         self.create_doc(dict_dict_final, read_templates_path, input, save_path, output)
 
 
@@ -165,6 +213,7 @@ if __name__ == "__main__":
         "气温趋势检验",
         "气压趋势检验",
         "测风塔完整率",
+        "相关性统计表",
     ]
     # 生成word文件
     test_word = Generate_docx()
