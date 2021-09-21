@@ -32,12 +32,12 @@ class Generate_docx:
 
     def method_to_dict(self, df):
         # print(df)
-        table_name=df.name
-        df_level1 = df.xs(table_name).dropna(how="all",axis=1)
+        table_name = df.name
+        df_level1 = df.xs(table_name).dropna(how="all", axis=1)
         print("df = df.xs(df.name).dropna(how=all,axis=1) ")
         print(df_level1)
         table_list = []
-        context = {}
+        context, dict_time = {}, {}
         cft_name_vaule = df_level1.iloc[0, 0]
         if df.name.endswith("words"):
             context = df_level1.to_dict()
@@ -64,6 +64,7 @@ class Generate_docx:
 
             tbl_contents_dict = dict({"tbl_contents": tbl_contents})
             dict_cft = dict({"cft_name": cft_name_vaule})
+
             context = dict(
                 dict_cft,
                 **col_labels,
@@ -81,14 +82,18 @@ class Generate_docx:
             #     **table_list,
             # )
         else:
+            if table_name.startswith("测风塔完整率"):
+                dict_time = dict({"cft_time": df.xs(df.name).iloc[1, 0]})
             df = df.xs(df.name).dropna(how="all", axis=1).to_dict()
             for key in df.keys():
                 table_list.append(df[key])
             dict_cft = dict({"cft_name": cft_name_vaule})
             dict_metadata = dict({"metadata": table_list})
 
+
             context = dict(
                 dict_cft,
+                **dict_time,
                 **dict_metadata,
             )
         return context
@@ -222,9 +227,9 @@ if __name__ == "__main__":
         "相关性统计表",
         "平均风速表",
         "逐时平均风速表",
-        "逐月平均风速表", 
-        "风切变指数表",  
-                
+        "逐月平均风速表",
+        "风切变指数表",
+        "湍流强度表", 
     ]
     # 生成word文件
     test_word = Generate_docx()
