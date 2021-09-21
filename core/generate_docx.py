@@ -31,21 +31,26 @@ class Generate_docx:
     """1. 重构Dict"""
 
     def method_to_dict(self, df):
+        # print(df)
+        table_name=df.name
+        df_level1 = df.xs(table_name).dropna(how="all",axis=1)
+        print("df = df.xs(df.name).dropna(how=all,axis=1) ")
+        print(df_level1)
         table_list = []
         context = {}
-        cft_name_vaule = df.iloc[0, 0]
+        cft_name_vaule = df_level1.iloc[0, 0]
         if df.name.endswith("words"):
-            context = df.xs(df.name).to_dict()
+            context = df_level1.to_dict()
 
-        elif df.name.endswith("nocols"):
+        elif table_name.endswith("nocols"):
             tbl_contents = []
 
-            cft_name_vaule = df.xs(df.name).index[0]
-            col_labels_list = df.xs(df.name).iloc[0, 1:].values.tolist()
+            cft_name_vaule = df_level1.index[0]
+            col_labels_list = df_level1.iloc[0, :].values.tolist()
             col_labels = dict({"col_labels": col_labels_list})
 
-            choose_df = df.xs(df.name).iloc[1:, :].dropna(how="all",axis=1)
-            choose_df = choose_df.fillna("-")
+            choose_df = df_level1.iloc[1:, :].astype(float).round(3)
+            choose_df = choose_df.fillna("--")
             print("asdasdasdasd")
             print(choose_df)
             for i in range(0, choose_df.shape[0]):
@@ -90,8 +95,9 @@ class Generate_docx:
 
     def load_dict(self, path, sheetname):
         context_tables, context_words, context_nocols = {}, {}, {}
-        df = pd.read_excel(path, index_col=[1, 2], sheet_name=sheetname)
-
+        df = pd.read_excel(path, index_col=[1, 2], sheet_name=sheetname).round(3)
+        print(" # df = df.loc[:, ~df.columns.str.startswith(Unnamed)]")
+        print(df)
         # df = df.loc[:, ~df.columns.str.startswith("Unnamed")]
         df = df.drop(columns=["Unnamed: 0"])
         df = df.dropna(how="all", axis=0)
@@ -214,6 +220,11 @@ if __name__ == "__main__":
         "气压趋势检验",
         "测风塔完整率",
         "相关性统计表",
+        "平均风速表",
+        "逐时平均风速表",
+        "逐月平均风速表", 
+        "风切变指数表",  
+                
     ]
     # 生成word文件
     test_word = Generate_docx()
